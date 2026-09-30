@@ -1,0 +1,64 @@
+
+  name: safa
+  description: "SAFA - Smart AI & Life Assistant. One App. Many Real-World Problems."
+  publish_to: 'none'
+
+  version: 1.0.0+1
+
+  environment:
+    sdk: ^3.10.4
+
+  dependencies:
+    flutter:
+      sdk: flutter
+
+    # Icons
+    cupertino_icons: ^1.0.8
+
+    # State Management & Navigation
+    get: ^4.6.6
+
+    # Firebase
+    firebase_core: ^3.0.0
+    firebase_auth: ^5.0.0
+    cloud_firestore: ^5.0.0
+    firebase_storage: ^12.0.0
+    firebase_messaging: ^15.0.0
+
+    # UI/UX
+    flutter_screenutil: ^5.9.0
+    cached_network_image: ^3.3.1
+    shimmer: ^3.0.0
+    fluttertoast: ^8.2.4
+
+    # Camera & Image Processing
+    camera: ^0.10.5+9
+    image_picker: ^1.0.7
+    google_mlkit_text_recognition: ^0.11.0
+
+    # Notifications & Permissions
+    flutter_local_notifications: ^17.0.0
+    permission_handler: ^11.2.0
+
+    # Utilities
+    intl: ^0.19.0
+    image: ^4.1.7
+    path_provider: ^2.1.2
+    timezone: ^0.9.4
+
+    # AI Services
+    http: ^1.2.0
+
+  dev_dependencies:
+    flutter_test:
+      sdk: flutter
+
+    flutter_lints: ^6.0.0
+
+  flutter:
+    uses-material-design: true
+
+    assets:
+      - assets/images/
+      - assets/icons/
+
