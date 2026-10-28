@@ -16,7 +16,8 @@ class InventoryScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Inventory Overview'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: AppColors.textPrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -28,21 +29,41 @@ class InventoryScreen extends StatelessWidget {
         onRefresh: inventoryController.refreshInventory,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          child: Obx(() {
-            if (inventoryController.isLoading.value) {
-              return _buildLoadingState();
-            }
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Text(
+                'Inventory Overview',
+                style: AppTextStyles.headline4,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Track your products and expiry dates',
+                style: AppTextStyles.body2.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
 
-            if (inventoryController.hasError.value) {
-              return _buildErrorState(inventoryController);
-            }
+              // Content
+              Obx(() {
+                if (inventoryController.isLoading.value) {
+                  return _buildLoadingState();
+                }
 
-            if (inventoryController.allProducts.isEmpty) {
-              return _buildEmptyState(inventoryController);
-            }
+                if (inventoryController.hasError.value) {
+                  return _buildErrorState(inventoryController);
+                }
 
-            return _buildInventoryOverview(inventoryController);
-          }),
+                if (inventoryController.allProducts.isEmpty) {
+                  return _buildEmptyState(inventoryController);
+                }
+
+                return _buildInventoryOverview(inventoryController);
+              }),
+            ],
+          ),
         ),
       ),
     );
@@ -64,48 +85,58 @@ class InventoryScreen extends StatelessWidget {
 
   Widget _buildShimmerHealthCard() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.surfaceElevated,
+      highlightColor: AppColors.surface,
       child: Card(
+        color: AppColors.surface,
         child: Container(
           height: 120,
-          color: Colors.white,
+          color: AppColors.surface,
         ),
       ),
     );
   }
 
   Widget _buildShimmerStatsGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
-      children: List.generate(
-        4,
-        (index) => Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Card(
-            child: Container(
-              color: Colors.white,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth < 400 ? 2 : 3;
+        final childAspectRatio = constraints.maxWidth < 400 ? 1.3 : 1.1;
+
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: childAspectRatio,
+          children: List.generate(
+            6,
+            (index) => Shimmer.fromColors(
+              baseColor: AppColors.surfaceElevated,
+              highlightColor: AppColors.surface,
+              child: Card(
+                color: AppColors.surface,
+                child: Container(
+                  color: AppColors.surface,
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   Widget _buildShimmerCategoryBreakdown() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.surfaceElevated,
+      highlightColor: AppColors.surface,
       child: Card(
+        color: AppColors.surface,
         child: Container(
           height: 200,
-          color: Colors.white,
+          color: AppColors.surface,
         ),
       ),
     );
@@ -113,12 +144,13 @@ class InventoryScreen extends StatelessWidget {
 
   Widget _buildShimmerExpiryTimeline() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.surfaceElevated,
+      highlightColor: AppColors.surface,
       child: Card(
+        color: AppColors.surface,
         child: Container(
           height: 150,
-          color: Colors.white,
+          color: AppColors.surface,
         ),
       ),
     );
@@ -185,21 +217,51 @@ class InventoryScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: controller.navigateToScanner,
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: const Text('Scan Product'),
-                ),
-                const SizedBox(width: 16),
-                OutlinedButton.icon(
-                  onPressed: controller.navigateToProducts,
-                  icon: const Icon(Icons.list),
-                  label: const Text('View Products'),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 350) {
+                  return Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: controller.navigateToScanner,
+                          icon: const Icon(Icons.qr_code_scanner),
+                          label: const Text('Scan Product'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: controller.navigateToProducts,
+                          icon: const Icon(Icons.list),
+                          label: const Text('View Products'),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: controller.navigateToScanner,
+                        icon: const Icon(Icons.qr_code_scanner),
+                        label: const Text('Scan Product'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: controller.navigateToProducts,
+                        icon: const Icon(Icons.list),
+                        label: const Text('View Products'),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -255,6 +317,8 @@ class InventoryScreen extends StatelessWidget {
     }
 
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -262,9 +326,19 @@ class InventoryScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Inventory Health',
-                  style: AppTextStyles.headline6,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.favorite,
+                      color: healthColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Inventory Health',
+                      style: AppTextStyles.headline6,
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -286,7 +360,7 @@ class InventoryScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Obx(() => LinearProgressIndicator(
                   value: controller.healthScore.value / 100,
-                  backgroundColor: Colors.grey[200],
+                  backgroundColor: AppColors.backgroundSecondary,
                   valueColor: AlwaysStoppedAnimation<Color>(healthColor),
                 )),
             const SizedBox(height: 8),
@@ -303,52 +377,111 @@ class InventoryScreen extends StatelessWidget {
   }
 
   Widget _buildStatisticsGrid(InventoryController controller) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.5,
-      children: [
-        _StatCard(
-          label: 'Total Products',
-          value: controller.totalProducts.value.toString(),
-          icon: Icons.inventory_2_outlined,
-          color: AppColors.primary,
-        ),
-        _StatCard(
-          label: 'Available',
-          value: controller.availableProducts.value.toString(),
-          icon: Icons.check_circle_outline,
-          color: AppColors.success,
-        ),
-        _StatCard(
-          label: 'Expiring Soon',
-          value: controller.expiringSoonProducts.value.toString(),
-          icon: Icons.warning_amber_outlined,
-          color: AppColors.warning,
-        ),
-        _StatCard(
-          label: 'Expired',
-          value: controller.expiredProducts.value.toString(),
-          icon: Icons.error_outline,
-          color: AppColors.error,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategoryBreakdown(InventoryController controller) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Category Breakdown',
-              style: AppTextStyles.headline6,
+            Row(
+              children: [
+                Icon(
+                  Icons.bar_chart,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Statistics',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Adjust crossAxisCount based on screen width
+                final crossAxisCount = constraints.maxWidth < 400 ? 2 : 3;
+                final childAspectRatio = constraints.maxWidth < 400 ? 1.3 : 1.1;
+
+                return GridView.count(
+                  crossAxisCount: crossAxisCount,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: childAspectRatio,
+                  children: [
+                    _StatCard(
+                      label: 'Total Products',
+                      value: controller.totalProducts.value.toString(),
+                      icon: Icons.inventory_2_outlined,
+                      color: AppColors.primary,
+                    ),
+                    _StatCard(
+                      label: 'Total Quantity',
+                      value: controller.totalQuantity.value.toString(),
+                      icon: Icons.format_list_numbered,
+                      color: AppColors.info,
+                    ),
+                    _StatCard(
+                      label: 'Low Stock',
+                      value: controller.lowStockProducts.value.toString(),
+                      icon: Icons.inventory_2,
+                      color: AppColors.accent,
+                    ),
+                    _StatCard(
+                      label: 'Expiring Soon',
+                      value: controller.expiringSoonProducts.value.toString(),
+                      icon: Icons.warning_amber_outlined,
+                      color: AppColors.warning,
+                    ),
+                    _StatCard(
+                      label: 'Expired',
+                      value: controller.expiredProducts.value.toString(),
+                      icon: Icons.error_outline,
+                      color: AppColors.error,
+                    ),
+                    _StatCard(
+                      label: 'Available',
+                      value: controller.availableProducts.value.toString(),
+                      icon: Icons.check_circle_outline,
+                      color: AppColors.success,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryBreakdown(InventoryController controller) {
+    return Card(
+      color: AppColors.surface,
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.category,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Category Breakdown',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Obx(() {
@@ -391,7 +524,7 @@ class InventoryScreen extends StatelessWidget {
                           width: 100,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: AppColors.backgroundSecondary,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: FractionallySizedBox(
@@ -419,14 +552,26 @@ class InventoryScreen extends StatelessWidget {
 
   Widget _buildExpiryTimeline(InventoryController controller) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Expiry Timeline',
-              style: AppTextStyles.headline6,
+            Row(
+              children: [
+                Icon(
+                  Icons.timeline,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Expiry Timeline',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Obx(() {
@@ -450,7 +595,7 @@ class InventoryScreen extends StatelessWidget {
                           child: Container(
                             height: 24,
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: AppColors.backgroundSecondary,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: FractionallySizedBox(
@@ -503,34 +648,103 @@ class InventoryScreen extends StatelessWidget {
 
   Widget _buildQuickActions(InventoryController controller) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Quick Actions',
-              style: AppTextStyles.headline6,
-            ),
-            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: controller.navigateToScanner,
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Add Product'),
-                  ),
+                Icon(
+                  Icons.flash_on,
+                  color: AppColors.primary,
+                  size: 20,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: controller.navigateToProducts,
-                    icon: const Icon(Icons.list),
-                    label: const Text('View All'),
-                  ),
+                const SizedBox(width: 8),
+                Text(
+                  'Quick Actions',
+                  style: AppTextStyles.headline6,
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.5,
+              children: [
+                _QuickActionButton(
+                  icon: Icons.qr_code_scanner,
+                  label: 'Add Product',
+                  color: AppColors.primary,
+                  onTap: controller.navigateToScanner,
+                ),
+                _QuickActionButton(
+                  icon: Icons.list,
+                  label: 'View All',
+                  color: AppColors.info,
+                  onTap: controller.navigateToProducts,
+                ),
+                _QuickActionButton(
+                  icon: Icons.event_available,
+                  label: 'Expiry',
+                  color: AppColors.warning,
+                  onTap: controller.navigateToExpiry,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 28,
+              color: color,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -555,28 +769,45 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: AppColors.surface,
+      elevation: 1,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 32,
+              size: 20,
               color: color,
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: AppTextStyles.headline4.copyWith(
-                color: color,
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: AppTextStyles.headline4.copyWith(
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: AppTextStyles.caption,
-              textAlign: TextAlign.center,
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 10,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),

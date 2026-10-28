@@ -20,6 +20,12 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+        // Suppress warnings from third-party libraries using older Java versions
+        freeCompilerArgs += listOf(
+            "-Xlint:-options",
+            "-Xlint:-deprecation",
+            "-Xlint:-unchecked"
+        )
     }
 
     defaultConfig {
@@ -34,7 +40,7 @@ android {
         release {
             signingConfig = signingConfigs.getByName("debug")
         }
-    } 
+    }
 }
 
 flutter {

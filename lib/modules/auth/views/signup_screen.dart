@@ -4,9 +4,14 @@ import '../controllers/auth_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-class SignupScreen extends StatelessWidget {
+class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
@@ -15,7 +20,8 @@ class SignupScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Sign Up'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: AppColors.textPrimary,
       ),
       body: SafeArea(
         child: Center(
@@ -71,13 +77,16 @@ class SignupScreen extends StatelessWidget {
                         ? null
                         : authController.passwordError.value,
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.visibility_outlined),
+                      icon: Icon(authController.isPasswordVisible.value
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined),
                       onPressed: () {
-                        // TODO: Implement password visibility toggle
+                        authController.togglePasswordVisibility();
+                        setState(() {});
                       },
                     ),
                   ),
-                  obscureText: true,
+                  obscureText: !authController.isPasswordVisible.value,
                 )),
                 const SizedBox(height: 16),
                 Obx(() => TextField(
@@ -91,13 +100,39 @@ class SignupScreen extends StatelessWidget {
                         ? null
                         : authController.confirmPasswordError.value,
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.visibility_outlined),
+                      icon: Icon(authController.isConfirmPasswordVisible.value
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined),
                       onPressed: () {
-                        // TODO: Implement password visibility toggle
+                        authController.toggleConfirmPasswordVisibility();
+                        setState(() {});
                       },
                     ),
                   ),
-                  obscureText: true,
+                  obscureText: !authController.isConfirmPasswordVisible.value,
+                )),
+                const SizedBox(height: 16),
+                Obx(() => TextField(
+                  onChanged: (value) =>
+                      authController.secretPassword.value = value,
+                  decoration: InputDecoration(
+                    labelText: 'Secret Password',
+                    hintText: 'Create your Secret Password',
+                    prefixIcon: const Icon(Icons.key_outlined),
+                    errorText: authController.secretPasswordError.value.isEmpty
+                        ? null
+                        : authController.secretPasswordError.value,
+                    suffixIcon: IconButton(
+                      icon: Icon(authController.isSecretPasswordVisible.value
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined),
+                      onPressed: () {
+                        authController.toggleSecretPasswordVisibility();
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  obscureText: !authController.isSecretPasswordVisible.value,
                 )),
                 const SizedBox(height: 24),
                 Obx(() => SizedBox(

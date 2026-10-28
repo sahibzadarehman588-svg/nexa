@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart' as firebase_core;
+import '../../firebase_options.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -13,7 +14,9 @@ class FirebaseService {
     if (_initialized) return;
 
     try {
-      await firebase_core.Firebase.initializeApp();
+      await firebase_core.Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       _initialized = true;
     } catch (e) {
       throw Exception('Firebase initialization failed: $e');

@@ -2,6 +2,16 @@
 cmake_minimum_required(VERSION 3.14)
 project(nexa LANGUAGES CXX)
 
+# Add nuget.exe to PATH for flutter_tts Windows build
+set(CMAKE_PROGRAM_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ${CMAKE_PROGRAM_PATH})
+set(ENV{PATH} "${CMAKE_CURRENT_SOURCE_DIR};$ENV{PATH}")
+
+# Set NUGET_EXECUTABLE to point to project-local nuget.exe
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe")
+  set(ENV{NUGET_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe")
+  set(NUGET_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/nuget.exe" CACHE FILEPATH "Path to nuget.exe")
+endif()
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "nexa")
@@ -9,6 +19,9 @@ set(BINARY_NAME "nexa")
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
 cmake_policy(VERSION 3.14...3.25)
+
+# Allow Firebase C++ SDK (which requires CMake 3.5 minimum) to work
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5")
 
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

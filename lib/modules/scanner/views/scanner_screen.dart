@@ -17,7 +17,8 @@ class ScannerScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Product Scanner'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: AppColors.textPrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.cancel),
@@ -30,14 +31,30 @@ class ScannerScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
+            Text(
+              'Add New Product',
+              style: AppTextStyles.headline4,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Scan or manually enter product details',
+              style: AppTextStyles.body2.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Image Selection Section
             _buildImageSelectionSection(scannerController),
             const SizedBox(height: 24),
 
-            // Image Preview Section
+            // Image Preview Section (only show while image is selected)
             Obx(() {
               if (scannerController.selectedImagePath.value.isEmpty) {
-                return _buildEmptyImageState();
+                // Don't show empty state after OCR processing
+                // (extracted data section will show what was found)
+                return const SizedBox.shrink();
               }
               return _buildImagePreview(scannerController);
             }),
@@ -54,13 +71,16 @@ class ScannerScreen extends StatelessWidget {
 
             // Extracted Data Section
             Obx(() {
-              if (scannerController.extractedProductName.value.isEmpty &&
-                  scannerController.selectedImagePath.value.isNotEmpty) {
-                return _buildNoDataDetected(scannerController);
-              }
+              // Show extracted data if any was detected
               if (scannerController.extractedProductName.value.isNotEmpty ||
-                  scannerController.extractedExpiryDate.value != null) {
+                  scannerController.extractedExpiryDate.value != null ||
+                  scannerController.extractedBrand.value.isNotEmpty ||
+                  scannerController.extractedBatchNumber.value.isNotEmpty) {
                 return _buildExtractedDataSection(scannerController);
+              }
+              // Show no data message only if image was selected but nothing detected
+              if (scannerController.selectedImagePath.value.isNotEmpty) {
+                return _buildNoDataDetected(scannerController);
               }
               return const SizedBox.shrink();
             }),
@@ -68,7 +88,12 @@ class ScannerScreen extends StatelessWidget {
 
             // Product Form Section
             Obx(() {
-              if (scannerController.selectedImagePath.value.isNotEmpty) {
+              // Show form if we have extracted data or an image is selected
+              if (scannerController.extractedProductName.value.isNotEmpty ||
+                  scannerController.extractedExpiryDate.value != null ||
+                  scannerController.extractedBrand.value.isNotEmpty ||
+                  scannerController.extractedBatchNumber.value.isNotEmpty ||
+                  scannerController.selectedImagePath.value.isNotEmpty) {
                 return _buildProductForm(scannerController, context);
               }
               return const SizedBox.shrink();
@@ -81,14 +106,26 @@ class ScannerScreen extends StatelessWidget {
 
   Widget _buildImageSelectionSection(ScannerController controller) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Select Image',
-              style: AppTextStyles.headline6,
+            Row(
+              children: [
+                Icon(
+                  Icons.camera_alt,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Select Image Source',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
@@ -110,35 +147,34 @@ class ScannerScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyImageState() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 64,
-              color: AppColors.textHint,
+            const SizedBox(height: 12),
+            Divider(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.qr_code_scanner,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Or Scan Code',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
-            Text(
-              'No Image Selected',
-              style: AppTextStyles.body1.copyWith(
-                color: AppColors.textSecondary,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: controller.scanQRBarcode,
+                icon: const Icon(Icons.qr_code_scanner),
+                label: const Text('Scan QR/Barcode'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Select an image to scan for product information',
-              style: AppTextStyles.caption,
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -148,6 +184,8 @@ class ScannerScreen extends StatelessWidget {
 
   Widget _buildImagePreview(ScannerController controller) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -156,16 +194,28 @@ class ScannerScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Selected Image',
-                  style: AppTextStyles.headline6,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.image,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Selected Image',
+                      style: AppTextStyles.headline6,
+                    ),
+                  ],
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () {
                     controller.selectedImagePath.value = '';
                     controller.extractedProductName.value = '';
+                    controller.extractedBrand.value = '';
                     controller.extractedExpiryDate.value = null;
+                    controller.extractedBatchNumber.value = '';
                   },
                 ),
               ],
@@ -188,6 +238,7 @@ class ScannerScreen extends StatelessWidget {
 
   Widget _buildProcessingIndicator() {
     return Card(
+      color: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -210,6 +261,7 @@ class ScannerScreen extends StatelessWidget {
 
   Widget _buildNoDataDetected(ScannerController controller) {
     return Card(
+      color: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -233,14 +285,26 @@ class ScannerScreen extends StatelessWidget {
 
   Widget _buildExtractedDataSection(ScannerController controller) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Extracted Information',
-              style: AppTextStyles.headline6,
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Extracted Information',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             if (controller.extractedProductName.value.isNotEmpty)
@@ -248,12 +312,22 @@ class ScannerScreen extends StatelessWidget {
                 'Product Name',
                 controller.extractedProductName.value,
               ),
+            if (controller.extractedBrand.value.isNotEmpty)
+              _buildExtractedField(
+                'Brand',
+                controller.extractedBrand.value,
+              ),
             if (controller.extractedExpiryDate.value != null)
               _buildExtractedField(
                 'Expiry Date',
                 app_date_utils.DateUtils.formatDisplayDate(
                   controller.extractedExpiryDate.value!,
                 ),
+              ),
+            if (controller.extractedBatchNumber.value.isNotEmpty)
+              _buildExtractedField(
+                'Batch Number',
+                controller.extractedBatchNumber.value,
               ),
             const SizedBox(height: 8),
             Text(
@@ -292,14 +366,26 @@ class ScannerScreen extends StatelessWidget {
 
   Widget _buildProductForm(ScannerController controller, BuildContext context) {
     return Card(
+      color: AppColors.surface,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Product Details',
-              style: AppTextStyles.headline6,
+            Row(
+              children: [
+                Icon(
+                  Icons.edit,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Product Details',
+                  style: AppTextStyles.headline6,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -360,15 +446,15 @@ class ScannerScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Category (Optional)
-            Obx(() => TextField(
-                  onChanged: (value) => controller.category.value = value,
-                  decoration: const InputDecoration(
-                    labelText: 'Category (Optional)',
-                    hintText: 'Enter category',
-                    prefixIcon: Icon(Icons.category_outlined),
-                  ),
-                  controller: controller.categoryController,
-                )),
+            TextField(
+              onChanged: (value) => controller.category.value = value,
+              decoration: const InputDecoration(
+                labelText: 'Category (Optional)',
+                hintText: 'Enter category',
+                prefixIcon: Icon(Icons.category_outlined),
+              ),
+              controller: controller.categoryController,
+            ),
             const SizedBox(height: 24),
 
             // Save Button

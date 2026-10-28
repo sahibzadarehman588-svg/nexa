@@ -44,39 +44,38 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyByD7kX6FUx7M95dUqXQGIscq2-Ps6fPjc',
-    appId: '1:317712225818:web:1bf19424cde8171701e3a3',
-    messagingSenderId: '317712225818',
-    projectId: 'task-102d2',
-    authDomain: 'task-102d2.firebaseapp.com',
-    storageBucket: 'task-102d2.firebasestorage.app',
-    measurementId: 'G-3KL7HVRMNP',
+    apiKey: 'AIzaSyAlAUrwKknAd5w39ovtbocT1DLA16DlLu8',
+    appId: '1:595464583393:web:e033e6adc9b7abe0a2dfa0',
+    messagingSenderId: '595464583393',
+    projectId: 'safa-36252',
+    authDomain: 'safa-36252.firebaseapp.com',
+    storageBucket: 'safa-36252.firebasestorage.app',
+    measurementId: 'G-NM495KXYQ7',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDLzrXqyt8X9RMiFt9NCY25d71yIQ66EmM',
-    appId: '1:317712225818:android:741bea6f96e8f7e001e3a3',
-    messagingSenderId: '317712225818',
-    projectId: 'task-102d2',
-    storageBucket: 'task-102d2.firebasestorage.app',
+    apiKey: 'AIzaSyChHc0bsAFQijZbmh_7bYRJsRFuoQINHgA',
+    appId: '1:595464583393:android:51be455670701b78a2dfa0',
+    messagingSenderId: '595464583393',
+    projectId: 'safa-36252',
+    storageBucket: 'safa-36252.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAecXEFpw0ZHtoDebGGFBNcWClveCdZV18',
-    appId: '1:317712225818:ios:3517a4f3099bf58401e3a3',
-    messagingSenderId: '317712225818',
-    projectId: 'task-102d2',
-    storageBucket: 'task-102d2.firebasestorage.app',
+    apiKey: 'AIzaSyAVxQXLM7A80kJ9KDT7edk6bGetK1XA5ks',
+    appId: '1:595464583393:ios:e9d1edbe8698fe2aa2dfa0',
+    messagingSenderId: '595464583393',
+    projectId: 'safa-36252',
+    storageBucket: 'safa-36252.firebasestorage.app',
     iosBundleId: 'com.example.nexa',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyByD7kX6FUx7M95dUqXQGIscq2-Ps6fPjc',
-    appId: '1:317712225818:web:fefe2b4e64ca8b8601e3a3',
-    messagingSenderId: '317712225818',
-    projectId: 'task-102d2',
-    authDomain: 'task-102d2.firebaseapp.com',
-    storageBucket: 'task-102d2.firebasestorage.app',
-    measurementId: 'G-HM8DPV1WQY',
+    apiKey: 'AIzaSyAlAUrwKknAd5w39ovtbocT1DLA16DlLu8',
+    appId: '1:595464583393:web:0163f5fa9ee5213ea2dfa0',
+    messagingSenderId: '595464583393',
+    projectId: 'safa-36252',
+    authDomain: 'safa-36252.firebaseapp.com',
+    storageBucket: 'safa-36252.firebasestorage.app',
+    measurementId: 'G-F4D7XTG7B0',
   );
 }

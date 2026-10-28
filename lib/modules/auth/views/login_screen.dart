@@ -4,9 +4,14 @@ import '../controllers/auth_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
@@ -27,7 +32,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'SAFA',
+                  'NEXIA',
                   style: AppTextStyles.headline1.copyWith(
                     color: AppColors.primary,
                     fontSize: 48,
@@ -35,50 +40,33 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'One App. Many Real-World Problems.',
+                  'One App. One Intelligent Assistant.',
                   style: AppTextStyles.body2.copyWith(
                     color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 48),
                 Obx(() => TextField(
-                  onChanged: (value) => authController.email.value = value,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    errorText: authController.emailError.value.isEmpty
-                        ? null
-                        : authController.emailError.value,
-                  ),
-                )),
-                const SizedBox(height: 16),
-                Obx(() => TextField(
                   onChanged: (value) => authController.password.value = value,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
+                    labelText: 'Secret Password',
+                    hintText: 'Enter Secret Password',
                     prefixIcon: const Icon(Icons.lock_outlined),
                     errorText: authController.passwordError.value.isEmpty
                         ? null
                         : authController.passwordError.value,
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.visibility_outlined),
+                      icon: Icon(authController.isLoginPasswordVisible.value
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined),
                       onPressed: () {
-                        // TODO: Implement password visibility toggle
+                        authController.toggleLoginPasswordVisibility();
+                        setState(() {});
                       },
                     ),
                   ),
-                  obscureText: true,
+                  obscureText: !authController.isLoginPasswordVisible.value,
                 )),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: authController.goToForgotPassword,
-                    child: const Text('Forgot Password?'),
-                  ),
-                ),
                 const SizedBox(height: 24),
                 Obx(() => SizedBox(
                   width: double.infinity,
@@ -98,7 +86,15 @@ class LoginScreen extends StatelessWidget {
                         : const Text('Login'),
                   ),
                 )),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: authController.goToForgotPasswordWithSecret,
+                    child: const Text('Forgot Secret Password?'),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: authController.goToSignup,
                   child: const Text('Don\'t have an account? Sign up'),

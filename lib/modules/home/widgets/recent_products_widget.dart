@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../data/models/product_model.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/date_utils.dart' as app_date_utils;
 
 class RecentProductsWidget extends StatelessWidget {
@@ -21,6 +22,7 @@ class RecentProductsWidget extends StatelessWidget {
       }
 
       return Card(
+        color: AppColors.surface,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -35,7 +37,9 @@ class RecentProductsWidget extends StatelessWidget {
                   ),
                   Text(
                     '${products.length} items',
-                    style: AppTextStyles.caption,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -44,7 +48,9 @@ class RecentProductsWidget extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: products.length > 3 ? 3 : products.length,
-                separatorBuilder: (context, index) => const Divider(),
+                separatorBuilder: (context, index) => Divider(
+                  color: AppColors.divider,
+                ),
                 itemBuilder: (context, index) {
                   final product = products[index];
                   return _buildProductItem(product);
@@ -56,7 +62,7 @@ class RecentProductsWidget extends StatelessWidget {
                   child: Center(
                     child: TextButton(
                       onPressed: () {
-                        // TODO: Navigate to products screen
+                        Get.toNamed(AppRoutes.products);
                       },
                       child: const Text('View All Products'),
                     ),
@@ -100,7 +106,7 @@ class RecentProductsWidget extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: AppColors.backgroundSecondary,
               borderRadius: BorderRadius.circular(8),
               image: product.productImage != null
                   ? DecorationImage(
@@ -110,7 +116,7 @@ class RecentProductsWidget extends StatelessWidget {
                   : null,
             ),
             child: product.productImage == null
-                ? const Icon(
+                ? Icon(
                     Icons.inventory_2_outlined,
                     color: AppColors.textHint,
                   )
@@ -132,7 +138,9 @@ class RecentProductsWidget extends StatelessWidget {
                   children: [
                     Text(
                       'Qty: ${product.quantity}',
-                      style: AppTextStyles.caption,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -159,7 +167,9 @@ class RecentProductsWidget extends StatelessWidget {
           ),
           Text(
             app_date_utils.DateUtils.formatDisplayDate(product.expiryDate),
-            style: AppTextStyles.caption,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -168,6 +178,7 @@ class RecentProductsWidget extends StatelessWidget {
 
   Widget _buildEmptyState() {
     return Card(
+      color: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -187,7 +198,9 @@ class RecentProductsWidget extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Start by scanning your first product!',
-              style: AppTextStyles.caption,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),

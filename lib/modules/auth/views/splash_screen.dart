@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/auth_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -16,19 +16,28 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuthAndNavigate();
+    // Use microtask to avoid timer issues in tests
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthAndNavigate();
+    });
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // Wait for splash animation
-    await Future.delayed(const Duration(seconds: 2));
+    // Listen to Firebase Auth state changes to get the persisted session
+    final authStateChanges = FirebaseAuth.instance.authStateChanges();
 
-    final AuthController authController = Get.find<AuthController>();
+    // Wait for the first auth state event (this will fire with the persisted session)
+    final firstEvent = await authStateChanges.first;
 
-    // Check if user is logged in
-    if (authController.isLoggedIn.value) {
+    if (!mounted) return;
+
+    if (firstEvent != null) {
+      // User is logged in (session persisted by Firebase)
+      debugPrint('✅ User already logged in: ${firstEvent.email}');
       Get.offAllNamed(AppRoutes.home);
     } else {
+      // No user logged in
+      debugPrint('ℹ️ No user logged in');
       Get.offAllNamed(AppRoutes.login);
     }
   }
@@ -48,7 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'SAFA',
+              'NEXIA',
               style: AppTextStyles.headline1.copyWith(
                 color: AppColors.surface,
                 fontSize: 48,
@@ -56,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'One App. Many Real-World Problems.',
+              'One App. One Intelligent Assistant.',
               style: AppTextStyles.body2.copyWith(
                 color: AppColors.surface,
               ),

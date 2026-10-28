@@ -19,7 +19,8 @@ class ProductsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('My Products'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: AppColors.textPrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -61,7 +62,7 @@ class ProductsScreen extends StatelessWidget {
 
   Widget _buildSearchAndFilterSection(ProductsController controller) {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(12.0),
       color: AppColors.surface,
       child: Column(
         children: [
@@ -71,10 +72,14 @@ class ProductsScreen extends StatelessWidget {
             decoration: InputDecoration(
               hintText: 'Search products...',
               prefixIcon: const Icon(Icons.search),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
               suffixIcon: Obx(() {
                 if (controller.searchQuery.value.isNotEmpty) {
                   return IconButton(
-                    icon: const Icon(Icons.clear),
+                    icon: const Icon(Icons.clear, size: 18),
                     onPressed: () => controller.onSearchChanged(''),
                   );
                 }
@@ -82,7 +87,7 @@ class ProductsScreen extends StatelessWidget {
               }),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Filter Row
           Row(
@@ -100,7 +105,7 @@ class ProductsScreen extends StatelessWidget {
                       items: controller.getCategories().map((category) {
                         return DropdownMenuItem(
                           value: category,
-                          child: Text(category),
+                          child: Text(category, style: TextStyle(fontSize: 13)),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -110,7 +115,7 @@ class ProductsScreen extends StatelessWidget {
                       },
                     )),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Obx(() => DropdownButtonFormField<String>(
                       initialValue: controller.selectedStatus.value,
@@ -122,18 +127,18 @@ class ProductsScreen extends StatelessWidget {
                         ),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'All', child: Text('All')),
+                        DropdownMenuItem(value: 'All', child: Text('All', style: TextStyle(fontSize: 13))),
                         DropdownMenuItem(
                           value: FirebaseConstants.statusSafe,
-                          child: Text('Safe'),
+                          child: Text('Safe', style: TextStyle(fontSize: 13)),
                         ),
                         DropdownMenuItem(
                           value: FirebaseConstants.statusExpiringSoon,
-                          child: Text('Expiring Soon'),
+                          child: Text('Expiring Soon', style: TextStyle(fontSize: 13)),
                         ),
                         DropdownMenuItem(
                           value: FirebaseConstants.statusExpired,
-                          child: Text('Expired'),
+                          child: Text('Expired', style: TextStyle(fontSize: 13)),
                         ),
                       ],
                       onChanged: (value) {
@@ -147,7 +152,7 @@ class ProductsScreen extends StatelessWidget {
           ),
 
           // Statistics Row
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Obx(() => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -155,16 +160,19 @@ class ProductsScreen extends StatelessWidget {
                     label: 'Total',
                     value: controller.totalProducts.value.toString(),
                     color: AppColors.primary,
+                    onTap: null,
                   ),
                   _StatChip(
                     label: 'Expiring',
                     value: controller.expiringSoonProducts.value.toString(),
                     color: AppColors.warning,
+                    onTap: controller.navigateToExpiringHistory,
                   ),
                   _StatChip(
                     label: 'Expired',
                     value: controller.expiredProducts.value.toString(),
                     color: AppColors.error,
+                    onTap: controller.navigateToExpiredHistory,
                   ),
                 ],
               )),
@@ -179,13 +187,14 @@ class ProductsScreen extends StatelessWidget {
       itemCount: 6,
       itemBuilder: (context, index) {
         return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
+          baseColor: AppColors.surfaceElevated,
+          highlightColor: AppColors.surface,
           child: Card(
+            color: AppColors.surface,
             margin: const EdgeInsets.only(bottom: 12.0),
             child: Container(
               height: 100,
-              color: Colors.white,
+              color: AppColors.surface,
             ),
           ),
         );
@@ -308,18 +317,19 @@ class ProductsScreen extends StatelessWidget {
     }
 
     return Card(
+      color: AppColors.surface,
       margin: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
         onTap: () => controller.navigateToProductDetail(product),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
               // Product Image
               Container(
-                width: 64,
-                height: 64,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(12),
@@ -334,15 +344,17 @@ class ProductsScreen extends StatelessWidget {
                     ? const Icon(
                         Icons.inventory_2_outlined,
                         color: AppColors.textHint,
+                        size: 28,
                       )
                     : null,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
 
               // Product Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       product.productName,
@@ -350,11 +362,13 @@ class ProductsScreen extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     if (product.category != null)
                       Text(
                         product.category!,
                         style: AppTextStyles.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     const SizedBox(height: 4),
                     Row(
@@ -363,21 +377,25 @@ class ProductsScreen extends StatelessWidget {
                           'Qty: ${product.quantity}',
                           style: AppTextStyles.caption,
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            statusText,
-                            style: AppTextStyles.caption.copyWith(
-                              color: statusColor,
-                              fontSize: 10,
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              statusText,
+                              style: AppTextStyles.caption.copyWith(
+                                color: statusColor,
+                                fontSize: 9,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -387,30 +405,35 @@ class ProductsScreen extends StatelessWidget {
                 ),
               ),
 
+              const SizedBox(width: 8),
+
               // Expiry Date and Actions
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     app_date_utils.DateUtils.formatDisplayDate(product.expiryDate),
-                    style: AppTextStyles.caption,
+                    style: AppTextStyles.caption.copyWith(fontSize: 11),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
                         onPressed: () => controller.navigateToEditProduct(product),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
+                        visualDensity: VisualDensity.compact,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20),
+                        icon: const Icon(Icons.delete_outline, size: 18),
                         onPressed: () => controller.deleteProduct(product),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
+                        visualDensity: VisualDensity.compact,
                       ),
                     ],
                   ),
@@ -428,39 +451,44 @@ class _StatChip extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatChip({
     required this.label,
     required this.value,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: AppTextStyles.headline6.copyWith(
-              color: color,
-              fontSize: 14,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: AppTextStyles.headline6.copyWith(
+                color: color,
+                fontSize: 14,
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: AppTextStyles.caption.copyWith(
-              color: color,
-              fontSize: 10,
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: color,
+                fontSize: 10,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

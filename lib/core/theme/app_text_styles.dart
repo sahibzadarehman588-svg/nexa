@@ -8,6 +8,7 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
     letterSpacing: -0.5,
+    height: 1.2,
   );
 
   static const TextStyle headline2 = TextStyle(
@@ -15,6 +16,7 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
     letterSpacing: -0.5,
+    height: 1.2,
   );
 
   static const TextStyle headline3 = TextStyle(
@@ -22,6 +24,7 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
     letterSpacing: -0.3,
+    height: 1.3,
   );
 
   static const TextStyle headline4 = TextStyle(
@@ -29,18 +32,35 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     letterSpacing: -0.2,
+    height: 1.3,
   );
 
   static const TextStyle headline5 = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    height: 1.4,
   );
 
   static const TextStyle headline6 = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    height: 1.4,
+  );
+
+  static const TextStyle subtitle1 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPrimary,
+    height: 1.4,
+  );
+
+  static const TextStyle subtitle2 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+    height: 1.4,
   );
 
   // Body Styles
@@ -86,6 +106,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.surface,
     letterSpacing: 0.5,
+    height: 1.2,
   );
 
   static const TextStyle buttonSmall = TextStyle(
@@ -93,6 +114,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.surface,
     letterSpacing: 0.5,
+    height: 1.2,
   );
 
   // Overline Style
@@ -101,6 +123,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
     letterSpacing: 1.5,
+    height: 1.4,
   );
 
   // Custom Styles
@@ -108,31 +131,36 @@ class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.error,
+    height: 1.4,
   );
 
   static const TextStyle success = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.success,
+    height: 1.4,
   );
 
   static const TextStyle warning = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.warning,
+    height: 1.4,
   );
 
   static const TextStyle hint = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.textHint,
+    height: 1.4,
   );
 
   // Price Style
   static const TextStyle price = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.bold,
-    color: AppColors.primary,
+    color: AppColors.textPrimary,
+    height: 1.2,
   );
 
   // Chip Style
@@ -140,5 +168,6 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
+    height: 1.4,
   );
 }

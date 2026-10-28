@@ -15,13 +15,15 @@ class NotificationSettingsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Notification Settings'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: AppColors.textPrimary,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           // Notification Status Card
           Card(
+            color: AppColors.surface,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -63,6 +65,7 @@ class NotificationSettingsScreen extends StatelessWidget {
 
           // Notification Preferences Card
           Card(
+            color: AppColors.surface,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -76,19 +79,22 @@ class NotificationSettingsScreen extends StatelessWidget {
                   _buildNotificationPreference(
                     'Expiry Reminders',
                     'Get notified when products are about to expire',
-                    true,
+                    'expiryReminders',
+                    notificationController,
                   ),
                   const Divider(),
                   _buildNotificationPreference(
                     'Expired Products',
                     'Get notified when products have expired',
-                    true,
+                    'expiredProducts',
+                    notificationController,
                   ),
                   const Divider(),
                   _buildNotificationPreference(
                     'Daily Summary',
                     'Get a daily summary of your inventory',
-                    false,
+                    'dailySummary',
+                    notificationController,
                   ),
                 ],
               ),
@@ -98,6 +104,7 @@ class NotificationSettingsScreen extends StatelessWidget {
 
           // Test Notification Card
           Card(
+            color: AppColors.surface,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -119,14 +126,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: notificationController.isNotificationEnabled.value
-                              ? () {
-                                  // TODO: Implement test notification
-                                  Get.snackbar(
-                                    'Test',
-                                    'Test notification sent',
-                                    snackPosition: SnackPosition.BOTTOM,
-                                  );
-                                }
+                              ? notificationController.sendTestNotification
                               : null,
                           child: const Text('Send Test Notification'),
                         ),
@@ -139,6 +139,7 @@ class NotificationSettingsScreen extends StatelessWidget {
 
           // Information Card
           Card(
+            color: AppColors.surface,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -168,40 +169,53 @@ class NotificationSettingsScreen extends StatelessWidget {
   Widget _buildNotificationPreference(
     String title,
     String description,
-    bool isEnabled,
+    String preferenceType,
+    NotificationController controller,
   ) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTextStyles.body1,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textSecondary,
+    return Obx(() {
+      bool isEnabled;
+      switch (preferenceType) {
+        case 'expiryReminders':
+          isEnabled = controller.expiryRemindersEnabled.value;
+          break;
+        case 'expiredProducts':
+          isEnabled = controller.expiredProductsEnabled.value;
+          break;
+        case 'dailySummary':
+          isEnabled = controller.dailySummaryEnabled.value;
+          break;
+        default:
+          isEnabled = false;
+      }
+
+      return Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.body1,
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        Switch(
-          value: isEnabled,
-          onChanged: (value) {
-            // TODO: Implement preference saving
-            Get.snackbar(
-              'Coming Soon',
-              'Notification preferences - Coming Soon',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-          },
-        ),
-      ],
-    );
+          Switch(
+            value: isEnabled,
+            onChanged: (value) {
+              controller.updateNotificationPreference(preferenceType, value);
+            },
+          ),
+        ],
+      );
+    });
   }
 }

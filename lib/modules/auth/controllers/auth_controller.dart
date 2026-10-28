@@ -19,14 +19,22 @@ class AuthController extends GetxController {
   // Form state
   final RxString email = ''.obs;
   final RxString password = ''.obs;
+  final RxString secretPassword = ''.obs;
   final RxString name = ''.obs;
   final RxString confirmPassword = ''.obs;
 
   // Error state
   final RxString emailError = ''.obs;
   final RxString passwordError = ''.obs;
+  final RxString secretPasswordError = ''.obs;
   final RxString nameError = ''.obs;
   final RxString confirmPasswordError = ''.obs;
+
+  // Password visibility state
+  final RxBool isPasswordVisible = false.obs;
+  final RxBool isConfirmPasswordVisible = false.obs;
+  final RxBool isSecretPasswordVisible = false.obs;
+  final RxBool isLoginPasswordVisible = false.obs;
 
   @override
   void onInit() {
@@ -60,9 +68,8 @@ class AuthController extends GetxController {
 
   // Validation methods
   bool validateLogin() {
-    emailError.value = Validators.validateEmail(email.value) ?? '';
     passwordError.value = Validators.validatePassword(password.value) ?? '';
-    return emailError.value.isEmpty && passwordError.value.isEmpty;
+    return passwordError.value.isEmpty;
   }
 
   bool validateSignup() {
@@ -73,10 +80,12 @@ class AuthController extends GetxController {
       confirmPassword.value,
       password.value,
     ) ?? '';
+    secretPasswordError.value = Validators.validatePassword(secretPassword.value) ?? '';
     return nameError.value.isEmpty &&
         emailError.value.isEmpty &&
         passwordError.value.isEmpty &&
-        confirmPasswordError.value.isEmpty;
+        confirmPasswordError.value.isEmpty &&
+        secretPasswordError.value.isEmpty;
   }
 
   // Login method
@@ -85,18 +94,46 @@ class AuthController extends GetxController {
 
     isLoading.value = true;
     try {
-      final user = await _authService.signInWithEmailAndPassword(
-        email.value,
-        password.value,
-      );
+      // Query Firestore for user with matching secret password
+      final user = await _firestoreService.getUserBySecretPassword(password.value);
 
-      // Check if user exists in Firestore
-      final existingUser = await _firestoreService.getUser(user.userId);
-      if (existingUser == null) {
-        // Create user in Firestore if doesn't exist
-        await _firestoreService.createUser(user);
+      if (user == null) {
+        throw Exception('Invalid Secret Password');
       }
 
+      // Try to sign in with Firebase
+      // First try with stored firebasePassword if available
+      if (user.firebasePassword != null && user.firebasePassword!.isNotEmpty) {
+        try {
+          await _authService.signInWithEmailAndPassword(
+            user.email,
+            user.firebasePassword!,
+          );
+        } catch (e) {
+          // If stored password fails, try with the secret password
+          debugPrint('Stored Firebase password failed, trying with secret password');
+          await _authService.signInWithEmailAndPassword(
+            user.email,
+            password.value,
+          );
+          // Update the stored password
+          final updatedUser = user.copyWith(firebasePassword: password.value);
+          await _firestoreService.updateUser(updatedUser);
+          debugPrint('Updated firebasePassword to match secret password');
+        }
+      } else {
+        // No stored firebasePassword, try with secret password
+        await _authService.signInWithEmailAndPassword(
+          user.email,
+          password.value,
+        );
+        // Update the user document with the firebasePassword
+        final updatedUser = user.copyWith(firebasePassword: password.value);
+        await _firestoreService.updateUser(updatedUser);
+        debugPrint('Updated user document with firebasePassword');
+      }
+
+      // User is now authenticated with Firebase
       currentUser.value = user;
       isLoggedIn.value = true;
 
@@ -134,10 +171,17 @@ class AuthController extends GetxController {
         name.value,
       );
 
-      // Create user in Firestore
-      await _firestoreService.createUser(user);
+      // Add secret password, Firebase password, and role to user model
+      final userWithSecret = user.copyWith(
+        secretPassword: secretPassword.value,
+        firebasePassword: password.value,
+        role: 'user',
+      );
 
-      currentUser.value = user;
+      // Create user in Firestore with secret password, Firebase password, and role
+      await _firestoreService.createUser(userWithSecret);
+
+      currentUser.value = userWithSecret;
       isLoggedIn.value = true;
 
       Get.snackbar(
@@ -164,6 +208,31 @@ class AuthController extends GetxController {
 
   // Logout method
   Future<void> logout() async {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              await _performLogout();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Get.theme.colorScheme.error,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performLogout() async {
     try {
       await _authService.signOut();
       isLoggedIn.value = false;
@@ -172,6 +241,7 @@ class AuthController extends GetxController {
       // Clear form data
       email.value = '';
       password.value = '';
+      secretPassword.value = '';
       name.value = '';
       confirmPassword.value = '';
 
@@ -195,7 +265,89 @@ class AuthController extends GetxController {
     }
   }
 
-  // Password reset method
+  // Password reset method (for login screen - uses secret password)
+  Future<void> resetPasswordWithSecret() async {
+    if (password.value.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Please enter your Secret Password',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+      );
+      return;
+    }
+
+    isLoading.value = true;
+    try {
+      // Query Firestore for user with matching secret password
+      final user = await _firestoreService.getUserBySecretPassword(password.value);
+
+      if (user == null) {
+        throw Exception('Invalid Secret Password');
+      }
+
+      // Send password reset email to the user's email
+      await _authService.sendPasswordResetEmail(user.email);
+      
+      Get.snackbar(
+        'Success',
+        'Password reset email sent to ${user.email}. After resetting your Firebase password, you can set a new Secret Password.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.primary,
+        colorText: Get.theme.colorScheme.onPrimary,
+      );
+      Get.back();
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString().replaceAll('Exception: ', ''),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Update secret password method (for users who reset Firebase password)
+  Future<void> updateSecretPassword(String newSecretPassword) async {
+    if (currentUser.value == null) {
+      throw Exception('No user logged in');
+    }
+
+    isLoading.value = true;
+    try {
+      final updatedUser = currentUser.value!.copyWith(
+        secretPassword: newSecretPassword,
+        firebasePassword: password.value, // Update Firebase password as well
+      );
+
+      await _firestoreService.updateUser(updatedUser);
+      currentUser.value = updatedUser;
+
+      Get.snackbar(
+        'Success',
+        'Secret Password updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.primary,
+        colorText: Get.theme.colorScheme.onPrimary,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString().replaceAll('Exception: ', ''),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Password reset method (for email input)
   Future<void> resetPassword() async {
     if (email.value.isEmpty) {
       Get.snackbar(
@@ -232,6 +384,23 @@ class AuthController extends GetxController {
     }
   }
 
+  // Password visibility toggle methods
+  void togglePasswordVisibility() {
+    isPasswordVisible.value = !isPasswordVisible.value;
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
+  }
+
+  void toggleSecretPasswordVisibility() {
+    isSecretPasswordVisible.value = !isSecretPasswordVisible.value;
+  }
+
+  void toggleLoginPasswordVisibility() {
+    isLoginPasswordVisible.value = !isLoginPasswordVisible.value;
+  }
+
   // Navigation methods
   void goToSignup() {
     Get.toNamed(AppRoutes.signup);
@@ -239,6 +408,34 @@ class AuthController extends GetxController {
 
   void goToLogin() {
     Get.back();
+  }
+
+  void goToForgotPasswordWithSecret() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Reset Firebase Password'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter your Secret Password to receive a password reset email for your Firebase account.',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 16),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: resetPasswordWithSecret,
+            child: const Text('Send Reset Email'),
+          ),
+        ],
+      ),
+    );
   }
 
   void goToForgotPassword() {

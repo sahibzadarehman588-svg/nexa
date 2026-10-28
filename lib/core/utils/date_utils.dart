@@ -20,15 +20,19 @@ class DateUtils {
   }
 
   static int calculateRemainingDays(DateTime expiryDate) {
+    // Normalize both dates to midnight for date-only comparison
     final now = DateTime.now();
-    final difference = expiryDate.difference(now);
+    final normalizedNow = DateTime(now.year, now.month, now.day);
+    final normalizedExpiryDate = DateTime(expiryDate.year, expiryDate.month, expiryDate.day);
+    final difference = normalizedExpiryDate.difference(normalizedNow);
     return difference.inDays;
   }
 
   static String getExpiryStatus(DateTime expiryDate) {
     final remainingDays = calculateRemainingDays(expiryDate);
 
-    if (remainingDays < 0) {
+    // Expired if expiry date is today or in the past
+    if (remainingDays <= 0) {
       return FirebaseConstants.statusExpired;
     } else if (remainingDays <= AppConstants.expiryWarningThreshold) {
       return FirebaseConstants.statusExpiringSoon;
@@ -43,7 +47,7 @@ class DateUtils {
     if (remainingDays < 0) {
       return 'Expired';
     } else if (remainingDays == 0) {
-      return 'Expires today';
+      return 'Expired'; // Changed from 'Expires today' to 'Expired'
     } else if (remainingDays == 1) {
       return 'Expires tomorrow';
     } else if (remainingDays <= AppConstants.expiryWarningThreshold) {
@@ -55,12 +59,12 @@ class DateUtils {
 
   static bool isExpiringSoon(DateTime expiryDate) {
     final remainingDays = calculateRemainingDays(expiryDate);
-    return remainingDays >= 0 && remainingDays <= AppConstants.expiryWarningThreshold;
+    return remainingDays > 0 && remainingDays <= AppConstants.expiryWarningThreshold;
   }
 
   static bool isExpired(DateTime expiryDate) {
     final remainingDays = calculateRemainingDays(expiryDate);
-    return remainingDays < 0;
+    return remainingDays <= 0; // Changed from < 0 to <= 0 to include today
   }
 
   static bool isSafe(DateTime expiryDate) {

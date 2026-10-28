@@ -3,6 +3,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../../data/services/firestore_service.dart';
 import '../../../data/models/product_model.dart';
 import '../../../core/constants/firebase_constants.dart';
+import '../../../core/routes/app_routes.dart';
 
 class InventoryController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
@@ -21,6 +22,8 @@ class InventoryController extends GetxController {
   final RxInt expiringSoonProducts = 0.obs;
   final RxInt expiredProducts = 0.obs;
   final RxInt availableProducts = 0.obs;
+  final RxInt lowStockProducts = 0.obs;
+  final RxInt totalQuantity = 0.obs;
 
   // Category breakdown
   final RxMap<String, int> categoryBreakdown = <String, int>{}.obs;
@@ -73,6 +76,10 @@ class InventoryController extends GetxController {
     availableProducts.value = allProducts
         .where((p) => p.status == FirebaseConstants.statusSafe)
         .length;
+    lowStockProducts.value = allProducts
+        .where((p) => p.quantity < 5)
+        .length;
+    totalQuantity.value = allProducts.fold(0, (sum, p) => sum + p.quantity);
   }
 
   void _calculateCategoryBreakdown() {
@@ -163,7 +170,7 @@ class InventoryController extends GetxController {
   }
 
   void navigateToProducts() {
-    Get.toNamed('/products')?.then((result) {
+    Get.toNamed(AppRoutes.products)?.then((result) {
       if (result == true) {
         refreshInventory();
       }
@@ -171,7 +178,15 @@ class InventoryController extends GetxController {
   }
 
   void navigateToScanner() {
-    Get.toNamed('/scanner')?.then((result) {
+    Get.toNamed(AppRoutes.scanner)?.then((result) {
+      if (result == true) {
+        refreshInventory();
+      }
+    });
+  }
+
+  void navigateToExpiry() {
+    Get.toNamed(AppRoutes.expiry)?.then((result) {
       if (result == true) {
         refreshInventory();
       }

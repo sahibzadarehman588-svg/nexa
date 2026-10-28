@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 abstract class AuthServiceInterface {
@@ -57,7 +58,9 @@ class AuthService implements AuthServiceInterface {
         updatedAt: DateTime.now(),
       );
     } on FirebaseAuthException catch (e) {
-      throw Exception(_getAuthErrorMessage(e.code));
+      debugPrint("FIREBASE AUTH ERROR CODE: ${e.code}");
+      debugPrint("FIREBASE AUTH ERROR MESSAGE: ${e.message}");
+      throw Exception(_getAuthErrorMessage(e.code, e.message));
     } catch (e) {
       throw Exception('Sign up failed: $e');
     }
@@ -84,7 +87,9 @@ class AuthService implements AuthServiceInterface {
         updatedAt: DateTime.now(),
       );
     } on FirebaseAuthException catch (e) {
-      throw Exception(_getAuthErrorMessage(e.code));
+      debugPrint("FIREBASE AUTH ERROR CODE: ${e.code}");
+      debugPrint("FIREBASE AUTH ERROR MESSAGE: ${e.message}");
+      throw Exception(_getAuthErrorMessage(e.code, e.message));
     } catch (e) {
       throw Exception('Sign in failed: $e');
     }
@@ -104,7 +109,9 @@ class AuthService implements AuthServiceInterface {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      throw Exception(_getAuthErrorMessage(e.code));
+      debugPrint("FIREBASE AUTH ERROR CODE: ${e.code}");
+      debugPrint("FIREBASE AUTH ERROR MESSAGE: ${e.message}");
+      throw Exception(_getAuthErrorMessage(e.code, e.message));
     } catch (e) {
       throw Exception('Password reset failed: $e');
     }
@@ -115,7 +122,7 @@ class AuthService implements AuthServiceInterface {
     return _auth.authStateChanges();
   }
 
-  String _getAuthErrorMessage(String code) {
+  String _getAuthErrorMessage(String code, String? message) {
     switch (code) {
       case 'user-not-found':
         return 'No user found with this email.';
@@ -134,7 +141,7 @@ class AuthService implements AuthServiceInterface {
       case 'operation-not-allowed':
         return 'Sign in with email and password is not enabled.';
       default:
-        return 'Authentication failed: $code';
+        return 'Firebase Auth Error: $code - ${message ?? "No message"}';
     }
   }
 }

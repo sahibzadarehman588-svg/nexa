@@ -3,13 +3,21 @@ import 'package:get/get.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/services/firestore_service.dart';
 import '../../../data/services/storage_service.dart';
+import '../../../data/services/notification_service.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/models/product_history_model.dart';
 import '../../../core/constants/firebase_constants.dart';
+import '../../../core/routes/app_routes.dart';
 
 class ProductsController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
   final FirestoreService _firestoreService = FirestoreService();
   final StorageService _storageService = StorageService();
+  final NotificationService _notificationService = NotificationService();
+
+  // Expose auth controller for use in screens
+  AuthController get authController => _authController;
+  FirestoreService get firestoreService => _firestoreService;
 
   // Reactive state
   final RxBool isLoading = false.obs;
@@ -34,6 +42,29 @@ class ProductsController extends GetxController {
   void onInit() {
     super.onInit();
     _loadProducts();
+    _rescheduleProductExpiryNotifications();
+  }
+
+  Future<void> _rescheduleProductExpiryNotifications() async {
+    debugPrint('=== ProductsController: Rescheduling product expiry notifications ===');
+    try {
+      for (final product in allProducts) {
+        // Only reschedule if expiry date is in the future (date-only comparison)
+        final now = DateTime.now();
+        final normalizedNow = DateTime(now.year, now.month, now.day);
+        final normalizedExpiryDate = DateTime(product.expiryDate.year, product.expiryDate.month, product.expiryDate.day);
+        if (normalizedExpiryDate.isAfter(normalizedNow)) {
+          await _notificationService.scheduleProductExpiryNotifications(
+            productId: product.productId,
+            productName: product.productName,
+            expiryDate: product.expiryDate,
+          );
+          debugPrint('✅ Rescheduled notifications for product: ${product.productId}');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error rescheduling product expiry notifications: $e');
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -46,10 +77,24 @@ class ProductsController extends GetxController {
     try {
       final userId = _authController.currentUser.value!.userId;
       final products = await _firestoreService.getProducts(userId);
-      
-      // Update product statuses
-      final updatedProducts = products.map((p) => ProductModel.updateStatus(p)).toList();
-      
+
+      // Get existing history to avoid duplicates
+      final expiringHistory = await _firestoreService.getProductHistory(userId, FirebaseConstants.statusExpiringSoon);
+      final expiredHistory = await _firestoreService.getProductHistory(userId, FirebaseConstants.statusExpired);
+
+      final expiringProductIds = expiringHistory.map((h) => h.productId).toSet();
+      final expiredProductIds = expiredHistory.map((h) => h.productId).toSet();
+
+      // Update product statuses and track history
+      final updatedProducts = <ProductModel>[];
+      for (var product in products) {
+        final updatedProduct = ProductModel.updateStatus(product);
+        updatedProducts.add(updatedProduct);
+
+        // Track history if status changed to expiring_soon or expired
+        await _trackProductHistory(userId, product, updatedProduct, expiringProductIds, expiredProductIds);
+      }
+
       allProducts.value = updatedProducts;
       _applyFilters();
       _updateStatistics();
@@ -58,6 +103,80 @@ class ProductsController extends GetxController {
       errorMessage.value = e.toString().replaceAll('Exception: ', '');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _trackProductHistory(
+    String userId,
+    ProductModel oldProduct,
+    ProductModel newProduct,
+    Set<String> expiringProductIds,
+    Set<String> expiredProductIds,
+  ) async {
+    // If status changed to expiring_soon
+    if (oldProduct.status != FirebaseConstants.statusExpiringSoon &&
+        newProduct.status == FirebaseConstants.statusExpiringSoon) {
+      await _createHistoryEntry(
+        userId,
+        newProduct,
+        FirebaseConstants.statusExpiringSoon,
+      );
+    }
+
+    // If status changed to expired
+    if (oldProduct.status != FirebaseConstants.statusExpired &&
+        newProduct.status == FirebaseConstants.statusExpired) {
+      await _createHistoryEntry(
+        userId,
+        newProduct,
+        FirebaseConstants.statusExpired,
+      );
+    }
+
+    // Backfill: If product is already expiring_soon but has no history record
+    if (newProduct.status == FirebaseConstants.statusExpiringSoon &&
+        !expiringProductIds.contains(newProduct.productId)) {
+      await _createHistoryEntry(
+        userId,
+        newProduct,
+        FirebaseConstants.statusExpiringSoon,
+      );
+    }
+
+    // Backfill: If product is already expired but has no history record
+    if (newProduct.status == FirebaseConstants.statusExpired &&
+        !expiredProductIds.contains(newProduct.productId)) {
+      await _createHistoryEntry(
+        userId,
+        newProduct,
+        FirebaseConstants.statusExpired,
+      );
+    }
+  }
+
+  Future<void> _createHistoryEntry(
+    String userId,
+    ProductModel product,
+    String status,
+  ) async {
+    try {
+      // Use productId + status as unique key to avoid duplicates
+      final historyId = '${product.productId}_$status';
+      final history = ProductHistoryModel.create(
+        historyId: historyId,
+        productId: product.productId,
+        productName: product.productName,
+        category: product.category,
+        expiryDate: product.expiryDate,
+        status: status,
+        quantity: product.quantity,
+        productImage: product.productImage,
+      );
+
+      await _firestoreService.createProductHistory(userId, history);
+    } catch (e) {
+      // Log error but don't block the main flow
+      debugPrint('Failed to create product history: $e');
     }
   }
 
@@ -163,6 +282,9 @@ class ProductsController extends GetxController {
       // Delete from Firestore
       await _firestoreService.deleteProduct(userId, product.productId);
 
+      // Cancel expiry notifications
+      await _notificationService.cancelProductExpiryNotifications(product.productId);
+
       // Remove from local list
       allProducts.remove(product);
       _applyFilters();
@@ -193,17 +315,12 @@ class ProductsController extends GetxController {
   }
 
   void navigateToProductDetail(ProductModel product) {
-    // TODO: Navigate to product detail screen
-    Get.snackbar(
-      'Coming Soon',
-      'Product Detail - Coming in Phase 5',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    // Navigate to edit screen for now (detail can be added later)
+    navigateToEditProduct(product);
   }
 
   void navigateToAddProduct() {
-    // Navigate to scanner to add new product
-    Get.toNamed('/scanner')?.then((result) {
+    Get.toNamed(AppRoutes.addProduct)?.then((result) {
       if (result == true) {
         refreshProducts();
       }
@@ -211,11 +328,30 @@ class ProductsController extends GetxController {
   }
 
   void navigateToEditProduct(ProductModel product) {
-    // TODO: Navigate to edit product screen
-    Get.snackbar(
-      'Coming Soon',
-      'Edit Product - Coming in Phase 5',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    Get.toNamed(AppRoutes.editProduct, arguments: product)?.then((result) {
+      if (result == true) {
+        refreshProducts();
+      }
+    });
+  }
+
+  Future<List<ProductHistoryModel>> loadProductHistory(String status) async {
+    if (_authController.currentUser.value == null) return [];
+
+    try {
+      final userId = _authController.currentUser.value!.userId;
+      return await _firestoreService.getProductHistory(userId, status);
+    } catch (e) {
+      debugPrint('Failed to load product history: $e');
+      return [];
+    }
+  }
+
+  void navigateToExpiringHistory() {
+    Get.toNamed(AppRoutes.productHistory, arguments: FirebaseConstants.statusExpiringSoon);
+  }
+
+  void navigateToExpiredHistory() {
+    Get.toNamed(AppRoutes.productHistory, arguments: FirebaseConstants.statusExpired);
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -33,11 +34,6 @@ class DocumentAIController extends GetxController {
 
   Future<bool> requestCameraPermission() async {
     final status = await Permission.camera.request();
-    return status.isGranted;
-  }
-
-  Future<bool> requestStoragePermission() async {
-    final status = await Permission.storage.request();
     return status.isGranted;
   }
 
@@ -78,18 +74,6 @@ class DocumentAIController extends GetxController {
   }
 
   Future<void> pickImageFromGallery() async {
-    final hasPermission = await requestStoragePermission();
-    if (!hasPermission) {
-      Get.snackbar(
-        'Permission Denied',
-        AppConstants.errorStoragePermission,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Get.theme.colorScheme.error,
-        colorText: Get.theme.colorScheme.onError,
-      );
-      return;
-    }
-
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -268,21 +252,35 @@ class DocumentAIController extends GetxController {
     Get.back();
   }
 
-  void copyText() {
-    // TODO: Implement text copying
+  void copyText(String text) {
+    Clipboard.setData(ClipboardData(text: text));
     Get.snackbar(
-      'Coming Soon',
-      'Text copying - Coming Soon',
+      'Copied',
+      'Text copied to clipboard',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  void shareText(String text) {
+    // For now, just show a snackbar
+    // In a real app, you would use share_plus package
+    Get.snackbar(
+      'Share',
+      'Share functionality coming soon',
       snackPosition: SnackPosition.BOTTOM,
     );
   }
 
-  void shareText() {
-    // TODO: Implement text sharing
-    Get.snackbar(
-      'Coming Soon',
-      'Text sharing - Coming Soon',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+  Future<void> loadDocumentHistory() async {
+    if (_authController.currentUser.value == null) return;
+
+    try {
+      // In a real implementation, you would load from Firestore
+      // For now, we'll use local storage
+      // documentHistory.value = await _firestoreService.getDocumentHistory(userId);
+    } catch (e) {
+      debugPrint('Failed to load document history: $e');
+    }
   }
 }

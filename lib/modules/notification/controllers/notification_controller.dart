@@ -3,11 +3,6 @@ import 'package:get/get.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../data/services/notification_service.dart';
 import '../../../data/services/firestore_service.dart';
-import '../../../data/models/product_model.dart';
-import '../../../data/models/alert_model.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../../core/constants/firebase_constants.dart';
-import '../../../core/utils/date_utils.dart' as app_date_utils;
 
 class NotificationController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
@@ -18,6 +13,11 @@ class NotificationController extends GetxController {
   final RxBool isNotificationEnabled = false.obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
+
+  // Notification preferences
+  final RxBool expiryRemindersEnabled = true.obs;
+  final RxBool expiredProductsEnabled = true.obs;
+  final RxBool dailySummaryEnabled = false.obs;
 
   @override
   void onInit() {
@@ -75,68 +75,49 @@ class NotificationController extends GetxController {
 
     try {
       final userId = _authController.currentUser.value!.userId;
-      final products = await _firestoreService.getProducts(userId);
 
+      // Schedule product expiry notifications
+      final products = await _firestoreService.getProducts(userId);
       for (final product in products) {
-        await _scheduleProductNotification(product);
+        // Only schedule if expiry date is in the future (date-only comparison)
+        final now = DateTime.now();
+        final normalizedNow = DateTime(now.year, now.month, now.day);
+        final normalizedExpiryDate = DateTime(product.expiryDate.year, product.expiryDate.month, product.expiryDate.day);
+        if (normalizedExpiryDate.isAfter(normalizedNow)) {
+          await _notificationService.scheduleProductExpiryNotifications(
+            productId: product.productId,
+            productName: product.productName,
+            expiryDate: product.expiryDate,
+          );
+        }
       }
+
+      // Schedule task notifications
+      final tasks = await _firestoreService.getTasks(userId);
+      for (final task in tasks) {
+        // Only schedule if task is not completed and has future due date/time
+        if (!task.isCompleted && task.dueDate != null && task.dueTime != null) {
+          final dueDateTime = DateTime(
+            task.dueDate!.year,
+            task.dueDate!.month,
+            task.dueDate!.day,
+            int.parse(task.dueTime!.split(':')[0]),
+            int.parse(task.dueTime!.split(':')[1]),
+          );
+          if (dueDateTime.isAfter(DateTime.now())) {
+            await _notificationService.scheduleTaskNotifications(
+              taskId: task.taskId,
+              taskTitle: task.title,
+              dueDate: task.dueDate!,
+              dueTime: task.dueTime,
+            );
+          }
+        }
+      }
+
+      debugPrint('✅ All notifications rescheduled successfully');
     } catch (e) {
       debugPrint('Error scheduling notifications: $e');
-    }
-  }
-
-  Future<void> _scheduleProductNotification(ProductModel product) async {
-    final remainingDays = app_date_utils.DateUtils.calculateRemainingDays(product.expiryDate);
-
-    // Schedule notification for products expiring soon
-    if (remainingDays > 0 && remainingDays <= AppConstants.expiryWarningThreshold) {
-      final notificationId = product.productId.hashCode;
-      final scheduledDate = product.expiryDate.subtract(const Duration(days: 1));
-
-      await _notificationService.scheduleNotification(
-        notificationId,
-        'Product Expiring Soon',
-        '${product.productName} will expire in $remainingDays days.',
-        scheduledDate,
-      );
-    }
-
-    // Create alert in Firestore for expired products
-    if (remainingDays < 0) {
-      await _createExpiryAlert(product);
-    }
-  }
-
-  Future<void> _createExpiryAlert(ProductModel product) async {
-    if (_authController.currentUser.value == null) return;
-
-    try {
-      final userId = _authController.currentUser.value!.userId;
-      final remainingDays = app_date_utils.DateUtils.calculateRemainingDays(product.expiryDate);
-      final absDays = remainingDays.abs();
-
-      final alert = AlertModel.create(
-        alertId: DateTime.now().millisecondsSinceEpoch.toString(),
-        alertType: FirebaseConstants.alertTypeExpired,
-        alertMessage: '${product.productName} expired $absDays days ago',
-      );
-
-      await _firestoreService.createAlert(userId, alert);
-    } catch (e) {
-      debugPrint('Error creating expiry alert: $e');
-    }
-  }
-
-  Future<void> scheduleExpiryReminder(ProductModel product) async {
-    final remainingDays = app_date_utils.DateUtils.calculateRemainingDays(product.expiryDate);
-
-    if (remainingDays > 0) {
-      await _notificationService.showExpiryNotification(
-        product.productName,
-        remainingDays,
-      );
-    } else {
-      await _notificationService.showExpiredNotification(product.productName);
     }
   }
 
@@ -161,28 +142,64 @@ class NotificationController extends GetxController {
     }
   }
 
-  Future<void> updateProductStatuses() async {
-    if (_authController.currentUser.value == null) return;
+  Future<void> sendTestNotification() async {
+    if (!isNotificationEnabled.value) {
+      Get.snackbar(
+        'Error',
+        'Notifications are not enabled',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+      );
+      return;
+    }
 
     try {
-      final userId = _authController.currentUser.value!.userId;
-      final products = await _firestoreService.getProducts(userId);
-
-      for (final product in products) {
-        final newStatus = app_date_utils.DateUtils.getExpiryStatus(product.expiryDate);
-        final newRemainingDays = app_date_utils.DateUtils.calculateRemainingDays(product.expiryDate);
-
-        // Update if status changed
-        if (product.status != newStatus || product.remainingDays != newRemainingDays) {
-          final updatedProduct = product.copyWith(
-            status: newStatus,
-            remainingDays: newRemainingDays,
-          );
-          await _firestoreService.updateProduct(userId, updatedProduct);
-        }
-      }
+      // Schedule a test notification 5 seconds from now
+      final testDate = DateTime.now().add(const Duration(seconds: 5));
+      await _notificationService.scheduleNotification(
+        DateTime.now().millisecondsSinceEpoch.hashCode,
+        'NEXIA — Test Notification',
+        'This is a test notification from NEXIA.',
+        testDate,
+      );
+      Get.snackbar(
+        'Success',
+        'Test notification scheduled for 5 seconds from now',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.primary,
+        colorText: Get.theme.colorScheme.onPrimary,
+      );
     } catch (e) {
-      debugPrint('Error updating product statuses: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to send test notification',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Get.theme.colorScheme.error,
+        colorText: Get.theme.colorScheme.onError,
+      );
     }
+  }
+
+  Future<void> updateNotificationPreference(String preferenceType, bool value) async {
+    switch (preferenceType) {
+      case 'expiryReminders':
+        expiryRemindersEnabled.value = value;
+        break;
+      case 'expiredProducts':
+        expiredProductsEnabled.value = value;
+        break;
+      case 'dailySummary':
+        dailySummaryEnabled.value = value;
+        break;
+    }
+
+    Get.snackbar(
+      'Success',
+      'Notification preference updated',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Get.theme.colorScheme.primary,
+      colorText: Get.theme.colorScheme.onPrimary,
+    );
   }
 }

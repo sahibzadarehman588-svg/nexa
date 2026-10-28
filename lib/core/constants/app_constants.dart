@@ -1,7 +1,7 @@
 class AppConstants {
   // App Info
-  static const String appName = 'SAFA';
-  static const String appTagline = 'One App. Many Real-World Problems.';
+  static const String appName = 'NEXIA';
+  static const String appTagline = 'One App. One Intelligent Assistant.';
   static const String appVersion = '1.0.0';
 
   // Expiry Thresholds (in days)
@@ -17,7 +17,7 @@ class AppConstants {
 
   // Notification Settings
   static const int notificationExpiryCheckHour = 9; // Check at 9 AM
-  static const String notificationChannelId = 'safa_expiry_notifications';
+  static const String notificationChannelId = 'nexia_expiry_notifications';
   static const String notificationChannelName = 'Expiry Reminders';
   static const String notificationChannelDescription = 'Notifications for product expiry reminders';
 
@@ -41,11 +41,12 @@ class AppConstants {
   static const String errorInvalidImage = 'Invalid image format. Please select a valid image.';
   static const String errorOcrFailed = 'Failed to extract text from image. Please try again.';
   static const String errorAiServiceFailed = 'AI service is currently unavailable. Please try again later.';
+  static const String errorAiNotConfigured = 'AI service is not configured. Please set your API key in settings.';
 
   // Success Messages
   static const String successLogin = 'Login successful!';
   static const String successSignup = 'Account created successfully!';
-  static const String successProductAdded = 'Product added successfully!';
+  static const String successProductAdded = 'Product Added Successfully';
   static const String successProductUpdated = 'Product updated successfully!';
   static const String successProductDeleted = 'Product deleted successfully!';
   static const String successLogout = 'Logged out successfully!';

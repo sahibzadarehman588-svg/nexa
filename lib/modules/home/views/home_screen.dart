@@ -6,6 +6,7 @@ import '../widgets/recent_alerts_widget.dart';
 import '../widgets/recent_products_widget.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/routes/app_routes.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -17,17 +18,27 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('SAFA'),
-        backgroundColor: AppColors.primary,
+        title: const Text('NEXIA'),
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: AppColors.textPrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
+            color: AppColors.textPrimary,
             onPressed: () {
-              Get.toNamed('/notification-settings');
+              Get.toNamed(AppRoutes.alerts);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            color: AppColors.textPrimary,
+            onPressed: () {
+              Get.toNamed(AppRoutes.profile);
             },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
+            color: AppColors.textPrimary,
             onPressed: homeController.logout,
           ),
         ],
@@ -49,7 +60,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'One App. Many Real-World Problems.',
+                        'One App. One Intelligent Assistant.',
                         style: AppTextStyles.body2.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -89,6 +100,8 @@ class HomeScreen extends StatelessWidget {
         _buildShimmerRecentProducts(),
         const SizedBox(height: 24),
         _buildShimmerRecentAlerts(),
+        const SizedBox(height: 24),
+        _buildShimmerAdditionalFeatures(),
       ],
     );
   }
@@ -97,6 +110,7 @@ class HomeScreen extends StatelessWidget {
     return Column(
       children: [
         Card(
+          color: AppColors.surface,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -135,14 +149,14 @@ class HomeScreen extends StatelessWidget {
   Widget _buildNormalState(HomeController controller) {
     return Column(
       children: [
-        // Quick Actions Grid
+        // Quick Actions Grid - Expanded to show all features
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.1,
           children: [
             _buildQuickActionCard(
               icon: Icons.qr_code_scanner,
@@ -163,6 +177,26 @@ class HomeScreen extends StatelessWidget {
               icon: Icons.chat_outlined,
               title: 'AI Assistant',
               onTap: controller.navigateToAIChat,
+            ),
+            _buildQuickActionCard(
+              icon: Icons.task_alt_outlined,
+              title: 'Tasks',
+              onTap: controller.navigateToTasks,
+            ),
+            _buildQuickActionCard(
+              icon: Icons.warning_amber_outlined,
+              title: 'Expiry',
+              onTap: controller.navigateToExpiry,
+            ),
+            _buildQuickActionCard(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Udhaar Khata',
+              onTap: controller.navigateToUdhaarKhata,
+            ),
+            _buildQuickActionCard(
+              icon: Icons.receipt_long_outlined,
+              title: 'Receipt Scanner',
+              onTap: controller.navigateToReceiptScanner,
             ),
           ],
         ),
@@ -216,18 +250,41 @@ class HomeScreen extends StatelessWidget {
         RecentAlertsWidget(
           alerts: controller.recentAlerts,
         ),
+        const SizedBox(height: 24),
+
+        // Additional Features Row
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionCard(
+                icon: Icons.description_outlined,
+                title: 'Document AI',
+                onTap: controller.navigateToDocumentAI,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildQuickActionCard(
+                icon: Icons.settings_outlined,
+                title: 'Notif. Settings',
+                onTap: () => Get.toNamed(AppRoutes.notificationSettings),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }
 
   Widget _buildShimmerStats() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.backgroundSecondary,
+      highlightColor: AppColors.surface,
       child: Card(
+        color: AppColors.surface,
         child: Container(
           height: 120,
-          color: Colors.white,
         ),
       ),
     );
@@ -235,20 +292,21 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildShimmerQuickActions() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.backgroundSecondary,
+      highlightColor: AppColors.surface,
       child: GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 1.2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1.1,
         children: List.generate(
-          4,
+          8,
           (index) => Card(
+            color: AppColors.surface,
             child: Container(
-              color: Colors.white,
+              color: AppColors.surface,
             ),
           ),
         ),
@@ -258,12 +316,12 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildShimmerRecentProducts() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.backgroundSecondary,
+      highlightColor: AppColors.surface,
       child: Card(
+        color: AppColors.surface,
         child: Container(
           height: 200,
-          color: Colors.white,
         ),
       ),
     );
@@ -271,13 +329,41 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildShimmerRecentAlerts() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
+      baseColor: AppColors.backgroundSecondary,
+      highlightColor: AppColors.surface,
       child: Card(
+        color: AppColors.surface,
         child: Container(
           height: 200,
-          color: Colors.white,
         ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerAdditionalFeatures() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.backgroundSecondary,
+      highlightColor: AppColors.surface,
+      child: Row(
+        children: [
+          Expanded(
+            child: Card(
+              color: AppColors.surface,
+              child: Container(
+                height: 100,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Card(
+              color: AppColors.surface,
+              child: Container(
+                height: 100,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -292,20 +378,22 @@ class HomeScreen extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
-                size: 48,
+                size: 40,
                 color: AppColors.primary,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 title,
-                style: AppTextStyles.headline6,
+                style: AppTextStyles.subtitle2,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

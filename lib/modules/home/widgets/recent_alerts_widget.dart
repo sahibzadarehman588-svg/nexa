@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../data/models/alert_model.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../core/utils/date_utils.dart' as app_date_utils;
 
 class RecentAlertsWidget extends StatelessWidget {
@@ -21,6 +22,7 @@ class RecentAlertsWidget extends StatelessWidget {
       }
 
       return Card(
+        color: AppColors.surface,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -35,7 +37,9 @@ class RecentAlertsWidget extends StatelessWidget {
                   ),
                   Text(
                     '${alerts.length} alerts',
-                    style: AppTextStyles.caption,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -44,7 +48,9 @@ class RecentAlertsWidget extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: alerts.length > 3 ? 3 : alerts.length,
-                separatorBuilder: (context, index) => const Divider(),
+                separatorBuilder: (context, index) => Divider(
+                  color: AppColors.divider,
+                ),
                 itemBuilder: (context, index) {
                   final alert = alerts[index];
                   return _buildAlertItem(alert);
@@ -56,7 +62,7 @@ class RecentAlertsWidget extends StatelessWidget {
                   child: Center(
                     child: TextButton(
                       onPressed: () {
-                        // TODO: Navigate to alerts screen
+                        Get.toNamed(AppRoutes.alerts);
                       },
                       child: const Text('View All Alerts'),
                     ),
@@ -74,11 +80,19 @@ class RecentAlertsWidget extends StatelessWidget {
     IconData iconData;
 
     switch (alert.alertType) {
-      case 'expiry':
+      case 'product_expiry':
         iconColor = AppColors.warning;
         iconData = Icons.warning_amber_outlined;
         break;
-      case 'expired':
+      case 'product_expired':
+        iconColor = AppColors.error;
+        iconData = Icons.error_outline;
+        break;
+      case 'task_due':
+        iconColor = AppColors.warning;
+        iconData = Icons.schedule_outlined;
+        break;
+      case 'task_overdue':
         iconColor = AppColors.error;
         iconData = Icons.error_outline;
         break;
@@ -117,7 +131,9 @@ class RecentAlertsWidget extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   app_date_utils.DateUtils.getRelativeTime(alert.alertDate),
-                  style: AppTextStyles.caption,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -138,6 +154,7 @@ class RecentAlertsWidget extends StatelessWidget {
 
   Widget _buildEmptyState() {
     return Card(
+      color: AppColors.surface,
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -157,7 +174,9 @@ class RecentAlertsWidget extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'You\'re all caught up!',
-              style: AppTextStyles.caption,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),
